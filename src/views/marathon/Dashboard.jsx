@@ -1,6 +1,6 @@
 import {
   CCard, CCardBody, CCardHeader,
-  CCol, CRow, CButton, CProgress, CBadge,
+  CCol, CRow, CButton, CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -9,6 +9,20 @@ import {
 } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMarathonStore } from '../../store/useMarathonStore'
+
+function ProgressBar({ value, color = '#0d6efd' }) {
+  return (
+    <div style={{ background: '#e9ecef', borderRadius: 6, height: 10, overflow: 'hidden' }}>
+      <div style={{
+        width: `${Math.min(Math.max(value, 0), 100)}%`,
+        height: '100%',
+        background: color,
+        borderRadius: 6,
+        transition: 'width 0.4s ease',
+      }} />
+    </div>
+  )
+}
 
 function StatCard({ label, value, sub, color, icon, to }) {
   const navigate = useNavigate()
@@ -94,21 +108,21 @@ export default function Dashboard() {
                   <span>Emails Sent</span>
                   <strong>{stats.emailed.toLocaleString()} / {stats.total.toLocaleString()} ({emailedPct}%)</strong>
                 </div>
-                <CProgress value={emailedPct} color="primary" style={{ height: 10, borderRadius: 6 }} />
+                <ProgressBar value={emailedPct} color="#0d6efd" />
               </div>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
                   <span>Responses Received</span>
                   <strong className="text-success">{stats.responded} ({respondedPct}%)</strong>
                 </div>
-                <CProgress value={respondedPct} color="success" style={{ height: 10, borderRadius: 6 }} />
+                <ProgressBar value={respondedPct} color="#198754" />
               </div>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
                   <span className="text-danger">Failed / Bounced</span>
                   <strong className="text-danger">{stats.failed} ({failedPct}%)</strong>
                 </div>
-                <CProgress value={failedPct} color="danger" style={{ height: 10, borderRadius: 6 }} />
+                <ProgressBar value={failedPct} color="#dc3545" />
               </div>
               <div className="d-flex gap-2 mt-3">
                 <CBadge color="secondary">{stats.noEmail} no email — letterbox only</CBadge>
@@ -127,22 +141,24 @@ export default function Dashboard() {
             <CCardBody>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Drops Complete</span>
+                  <span>Contacts Dropped</span>
                   <strong className="text-success">{stats.dropped} / {stats.total} ({droppedPct}%)</strong>
                 </div>
-                <CProgress value={droppedPct} color="success" style={{ height: 10, borderRadius: 6 }} />
+                <ProgressBar value={droppedPct} color="#198754" />
               </div>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Drop Runs</span>
-                  <strong>{completedRuns} / {dropRuns.length} complete</strong>
+                  <span>Drop Runs Complete</span>
+                  <strong>{completedRuns} / {dropRuns.length}</strong>
                 </div>
+                <ProgressBar value={dropRuns.length ? Math.round((completedRuns / dropRuns.length) * 100) : 0} color="#0dcaf0" />
               </div>
               <div>
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Street Segments</span>
-                  <strong>{segments.length} segments · {totalProps.toLocaleString()} properties</strong>
+                  <span>Segments Complete</span>
+                  <strong>{segments.filter(s => s.status === 'complete').length} / {segments.length}</strong>
                 </div>
+                <ProgressBar value={segments.length ? Math.round((segments.filter(s => s.status === 'complete').length / segments.length) * 100) : 0} color="#FF4D4D" />
               </div>
             </CCardBody>
           </CCard>
