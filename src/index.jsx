@@ -10,7 +10,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './views/auth/Login'
 import SetPassword from './views/auth/SetPassword'
 
-// Check for invite/recovery in URL hash at load time
+// Read hash ONCE at load time before anything clears it
 const hash = window.location.hash
 const hashParams = new URLSearchParams(hash.replace('#', ''))
 const IS_PASSWORD_FLOW = ['invite', 'recovery'].includes(hashParams.get('type'))
@@ -19,13 +19,31 @@ function Root() {
   const [splashDone, setSplashDone] = useState(false)
   const { user, loading } = useAuth()
 
-  // Keep splash visible until both splash timer AND auth check are done
-  if (!splashDone || loading) return <SplashScreen onDone={() => setSplashDone(true)} />
+  // 1. Always show splash first (it calls onDone after its timer)
+  if (!splashDone) {
+    return <SplashScreen onDone={() => setSplashDone(true)} />
+  }
 
-  // Invite or password reset link — go straight to set-password
+  // 2. Splash done — now wait for auth check (show nothing, splash already gone)
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#1F3864',
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #FF4D4D', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
+
+  // 3. Invite or reset link — must set password
   if (IS_PASSWORD_FLOW) return <SetPassword />
 
+  // 4. Not logged in
   if (!user) return <Login />
+
+  // 5. All good — show app
   return <App />
 }
 
