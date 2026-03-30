@@ -1,13 +1,9 @@
 import React from 'react'
 import {
-  CDropdown,
-  CDropdownDivider,
-  CDropdownHeader,
-  CDropdownItem,
-  CDropdownMenu,
-  CDropdownToggle,
+  CDropdown, CDropdownDivider, CDropdownHeader,
+  CDropdownItem, CDropdownMenu, CDropdownToggle,
 } from '@coreui/react'
-import { cilLockLocked, cilUser, cilSettings } from '@coreui/icons'
+import { cilLockLocked, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -19,12 +15,10 @@ const AppHeaderDropdown = () => {
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle placement="bottom-end" className="py-0 pe-0" caret={false}>
-        {/* Generic user icon avatar */}
         <div style={{
           width: 36, height: 36, borderRadius: '50%',
           background: '#FF4D4D', display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-          color: '#fff', flexShrink: 0,
+          alignItems: 'center', justifyContent: 'center', color: '#fff',
         }}>
           <CIcon icon={cilUser} />
         </div>
@@ -35,14 +29,9 @@ const AppHeaderDropdown = () => {
           {user?.email || 'Account'}
         </CDropdownHeader>
 
-        <CDropdownItem style={{ cursor: 'pointer' }} onClick={() => navigate('/settings')}>
+        <CDropdownItem style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
           <CIcon icon={cilUser} className="me-2" />
           Profile
-        </CDropdownItem>
-
-        <CDropdownItem style={{ cursor: 'pointer' }} onClick={() => navigate('/settings')}>
-          <CIcon icon={cilSettings} className="me-2" />
-          Settings
         </CDropdownItem>
 
         <CDropdownDivider />

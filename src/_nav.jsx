@@ -8,10 +8,12 @@ import {
   cilMap,
   cilCloudUpload,
   cilSettings,
+  cilUser,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 
-const _nav = [
+// Base nav — always visible
+export const baseNav = [
   {
     component: CNavTitle,
     name: '2026 Adelaide Marathon',
@@ -56,6 +58,20 @@ const _nav = [
   },
   {
     component: CNavTitle,
+    name: 'Account',
+  },
+  {
+    component: CNavItem,
+    name: 'Profile',
+    to: '/profile',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+  },
+]
+
+// Admin-only nav items
+export const adminNav = [
+  {
+    component: CNavTitle,
     name: 'Admin',
   },
   {
@@ -72,4 +88,6 @@ const _nav = [
   },
 ]
 
+// Default export — base only (AppSidebar will merge admin items if needed)
+const _nav = baseNav
 export default _nav
