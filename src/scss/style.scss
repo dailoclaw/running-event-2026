@@ -1,7 +1,10 @@
-@use "@coreui/coreui/scss/coreui" as * with ( 
+// Marathon brand overrides — must come BEFORE @use
+@use "@coreui/coreui/scss/coreui" as * with (
   $enable-deprecation-messages: false,
+  $primary: #FF4D4D,
+  $sidebar-bg: #1F3864,
+  $sidebar-brand-bg: #FF4D4D,
 );
-@use "@coreui/chartjs/scss/coreui-chartjs";
 @use "vendors/simplebar";
 
 body {
@@ -17,51 +20,123 @@ body {
 
 .header > .container-fluid,
 .sidebar-header {
-  min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+  min-height: calc(4rem + 1px);
 }
 
-.sidebar-brand-full {
-  margin-left: 3px;
-}
+.sidebar-brand-full { margin-left: 3px; }
 
 .sidebar-header {
   .nav-underline-border {
     --cui-nav-underline-border-link-padding-x: 1rem;
     --cui-nav-underline-border-gap: 0;
   }
-
   .nav-link {
     display: flex;
     align-items: center;
-    min-height: calc(4rem + 1px); // stylelint-disable-line function-disallowed-list
+    min-height: calc(4rem + 1px);
   }
 }
 
-.sidebar-toggler {
-  margin-inline-start: auto;
-}
+.sidebar-toggler { margin-inline-start: auto; }
 
 .sidebar-narrow,
 .sidebar-narrow-unfoldable:not(:hover) {
-  .sidebar-toggler {
-    margin-inline-end: auto;
+  .sidebar-toggler { margin-inline-end: auto; }
+}
+
+.header > .container-fluid + .container-fluid { min-height: 3rem; }
+.footer { min-height: calc(3rem + 1px); }
+
+/* ── Marathon custom ────────────────────────────────────── */
+
+.sidebar {
+  --cui-sidebar-bg: #1F3864;
+  --cui-sidebar-nav-title-color: rgba(255,255,255,0.45);
+  --cui-sidebar-nav-link-color: rgba(255,255,255,0.78);
+  --cui-sidebar-nav-link-hover-color: #fff;
+  --cui-sidebar-nav-link-hover-bg: rgba(255, 77, 77, 0.2);
+  --cui-sidebar-nav-link-active-color: #fff;
+  --cui-sidebar-nav-link-active-bg: rgba(255, 77, 77, 0.3);
+  --cui-sidebar-brand-bg: #FF4D4D;
+}
+
+.stat-card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  border-radius: 12px;
+  transition: transform .2s, box-shadow .2s;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
   }
 }
 
-.header > .container-fluid + .container-fluid {
-  min-height: 3rem;
+.drop-zone {
+  border: 2px dashed #FF4D4D;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  cursor: pointer;
+  transition: background .2s;
+  &:hover, &.active { background: #fff5f5; }
 }
 
-.footer {
-  min-height: calc(3rem + 1px); // stylelint-disable-line function-disallowed-list
+/* ── Leaflet fixes (must override CoreUI z-index/position resets) ── */
+.leaflet-container {
+  height: 540px;
+  border-radius: 0 0 12px 12px;
+  z-index: 1;
 }
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.leaflet-map-pane canvas,
+.leaflet-map-pane svg {
+  transform-origin: 0 0;
+}
+
+.leaflet-control-container .leaflet-control {
+  clear: none;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 400;
+  pointer-events: none;
+  position: absolute;
+}
+
+.leaflet-top { top: 0; }
+.leaflet-right { right: 0; }
+.leaflet-bottom { bottom: 0; }
+.leaflet-left { left: 0; }
+
+.leaflet-control {
+  pointer-events: visiblePainted;
+  pointer-events: auto;
+}
+
+.leaflet-tile-pane { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane { z-index: 500; }
+.leaflet-marker-pane { z-index: 600; }
+.leaflet-tooltip-pane { z-index: 650; }
+.leaflet-popup-pane { z-index: 700; }
 
 @include color-mode(dark) {
-  body {
-    background-color: var(--cui-dark-bg-subtle);
-  }
-
-  .footer {
-    --cui-footer-bg: var(--cui-body-bg);
-  }
+  body { background-color: var(--cui-dark-bg-subtle); }
+  .footer { --cui-footer-bg: var(--cui-body-bg); }
 }
