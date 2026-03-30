@@ -1,21 +1,51 @@
-import { useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
 import { CCard, CCardBody, CButton, CFormInput, CAlert, CSpinner } from '@coreui/react'
 
 export default function SetPassword() {
-  const { updatePassword, signOut } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [verifying, setVerifying] = useState(true)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
+
+  useEffect(() => {
+    // Exchange the token_hash from the URL for a real session
+    const hash = window.location.hash
+    const params = new URLSearchParams(hash.replace('#', ''))
+    const token_hash = params.get('token_hash')
+    const type = params.get('type') // 'invite' or 'recovery'
+
+    if (token_hash && type) {
+      supabase.auth.verifyOtp({ token_hash, type })
+        .then(({ error }) => {
+          if (error) {
+            setError('This link has expired or already been used. Please request a new one.')
+          } else {
+            setSessionReady(true)
+            // Clean up the URL hash so it's not reused
+            window.history.replaceState(null, '', window.location.pathname)
+          }
+          setVerifying(false)
+        })
+    } else {
+      // No token in URL — check if we already have a session (e.g. PASSWORD_RECOVERY event)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setSessionReady(true)
+        else setError('Invalid or missing reset link. Please request a new one.')
+        setVerifying(false)
+      })
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
     setLoading(true); setError('')
-    const { error } = await updatePassword(password)
+    const { error } = await supabase.auth.updateUser({ password })
     if (error) { setError(error.message); setLoading(false); return }
     setDone(true)
     setLoading(false)
@@ -50,21 +80,42 @@ export default function SetPassword() {
 
         <CCard style={{ borderRadius: 16, border: 'none', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
           <CCardBody style={{ padding: '32px' }}>
-            {done ? (
+
+            {/* Verifying token */}
+            {verifying && (
+              <div className="text-center py-3">
+                <CSpinner color="primary" className="mb-3" />
+                <div className="text-muted">Verifying your link...</div>
+              </div>
+            )}
+
+            {/* Error state */}
+            {!verifying && error && !sessionReady && (
+              <>
+                <CAlert color="danger">{error}</CAlert>
+                <CButton color="secondary" className="w-100 mt-2" onClick={() => window.location.href = '/'}>
+                  Back to Sign In
+                </CButton>
+              </>
+            )}
+
+            {/* Success — password set */}
+            {done && (
               <div className="text-center">
                 <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
                 <h5 className="fw-bold mb-2">Password set!</h5>
-                <p className="text-muted mb-4">Your account is ready. Click below to go to the app.</p>
+                <p className="text-muted mb-4">Your account is ready. Click below to sign in.</p>
                 <CButton color="primary" className="w-100" onClick={() => window.location.href = '/'}>
-                  Go to Dashboard
+                  Go to Sign In
                 </CButton>
               </div>
-            ) : (
+            )}
+
+            {/* Set password form */}
+            {!verifying && sessionReady && !done && (
               <>
                 <h5 className="fw-bold mb-1">Set Your Password</h5>
-                <p className="text-muted small mb-4">
-                  Choose a password to secure your account. You'll use this to sign in from now on.
-                </p>
+                <p className="text-muted small mb-4">Choose a password to secure your account.</p>
 
                 {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
@@ -95,15 +146,9 @@ export default function SetPassword() {
                     {loading ? 'Saving...' : 'Set Password & Continue'}
                   </CButton>
                 </form>
-
-                <div className="text-center mt-3">
-                  <button type="button" className="btn btn-link btn-sm text-muted"
-                    onClick={() => signOut()}>
-                    Cancel — Sign out
-                  </button>
-                </div>
               </>
             )}
+
           </CCardBody>
         </CCard>
       </div>

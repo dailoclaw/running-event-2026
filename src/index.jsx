@@ -10,15 +10,19 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './views/auth/Login'
 import SetPassword from './views/auth/SetPassword'
 
+// Check for invite/recovery in URL hash at load time
+const hash = window.location.hash
+const hashParams = new URLSearchParams(hash.replace('#', ''))
+const IS_PASSWORD_FLOW = ['invite', 'recovery'].includes(hashParams.get('type'))
+
 function Root() {
   const [splashDone, setSplashDone] = useState(false)
-  const { user, loading, needsPassword } = useAuth()
+  const { user, loading } = useAuth()
 
   if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />
 
-  // If this is an invite or recovery link — always show set password
-  // regardless of whether user/session is resolved yet
-  if (needsPassword) return <SetPassword />
+  // Invite or password reset link — go straight to set-password
+  if (IS_PASSWORD_FLOW) return <SetPassword />
 
   if (loading) return null
   if (!user) return <Login />
