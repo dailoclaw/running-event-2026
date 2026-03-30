@@ -8,6 +8,7 @@ import {
 } from '@coreui/react'
 import { useMarathonStore } from '../../store/useMarathonStore'
 import { useSearchParams } from 'react-router-dom'
+import { usePermissions } from '../../lib/usePermissions'
 
 const PER_PAGE = 50
 
@@ -136,6 +137,7 @@ function EditModal({ contact, onSave, onClose }) {
 
 export default function Contacts() {
   const { contacts, updateContact, deleteContact } = useMarathonStore()
+  const { canEditContacts, canDeleteContacts } = usePermissions()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [sheetFilter, setSheetFilter] = useState(searchParams.get('sheet') || '')
@@ -262,14 +264,14 @@ export default function Contacts() {
                   <CTableDataCell>{dropBadge(c.dropStatus)}</CTableDataCell>
                   <CTableDataCell onClick={(e) => e.stopPropagation()}>
                     <div className="d-flex gap-1">
-                      <CButton color="primary" variant="outline" size="sm"
-                        onClick={() => setEditing(c)}>
-                        Edit
-                      </CButton>
-                      <CButton color="danger" variant="ghost" size="sm"
-                        onClick={() => { if (confirm('Delete this contact?')) deleteContact(c.id) }}>
-                        ✕
-                      </CButton>
+                      {canEditContacts && (
+                        <CButton color="primary" variant="outline" size="sm" onClick={() => setEditing(c)}>Edit</CButton>
+                      )}
+                      {canDeleteContacts && (
+                        <CButton color="danger" variant="ghost" size="sm"
+                          onClick={() => { if (confirm('Delete this contact?')) deleteContact(c.id) }}>✕</CButton>
+                      )}
+                      {!canEditContacts && <span className="small text-muted">View only</span>}
                     </div>
                   </CTableDataCell>
                 </CTableRow>
@@ -323,19 +325,21 @@ export default function Contacts() {
             </CTable>
           </CModalBody>
           <CModalFooter>
-            <CButton color="primary" onClick={() => setEditing(viewing)}>
-              Edit Contact
-            </CButton>
-            <CButton
-              color={viewing.dropStatus === 'dropped' ? 'secondary' : 'success'}
-              onClick={() => {
-                const next = viewing.dropStatus === 'dropped' ? 'pending' : 'dropped'
-                updateContact(viewing.id, { dropStatus: next })
-                setViewing({ ...viewing, dropStatus: next })
-              }}
-            >
-              {viewing.dropStatus === 'dropped' ? 'Undo Drop' : 'Mark Dropped'}
-            </CButton>
+            {canEditContacts && (
+              <CButton color="primary" onClick={() => setEditing(viewing)}>Edit Contact</CButton>
+            )}
+            {canEditContacts && (
+              <CButton
+                color={viewing.dropStatus === 'dropped' ? 'secondary' : 'success'}
+                onClick={() => {
+                  const next = viewing.dropStatus === 'dropped' ? 'pending' : 'dropped'
+                  updateContact(viewing.id, { dropStatus: next })
+                  setViewing({ ...viewing, dropStatus: next })
+                }}
+              >
+                {viewing.dropStatus === 'dropped' ? 'Undo Drop' : 'Mark Dropped'}
+              </CButton>
+            )}
             <CButton color="secondary" variant="outline" onClick={() => setViewing(null)}>Close</CButton>
           </CModalFooter>
         </CModal>

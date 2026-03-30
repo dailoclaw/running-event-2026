@@ -132,8 +132,8 @@ export default function Users() {
                       </div>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <CBadge color={u.role === 'admin' ? 'danger' : 'secondary'}>
-                        {u.role || 'member'}
+                      <CBadge color={u.role === 'admin' ? 'danger' : u.role === 'member' ? 'primary' : 'secondary'}>
+                        {u.role || 'viewer'}
                       </CBadge>
                     </CTableDataCell>
                     <CTableDataCell className="text-muted small">
@@ -144,12 +144,13 @@ export default function Users() {
                         <CFormSelect
                           size="sm"
                           style={{ maxWidth: 130 }}
-                          value={u.role || 'member'}
+                          value={u.role || 'viewer'}
                           onChange={(e) => updateRole(u.id, e.target.value)}
                           disabled={saving === u.id}
                         >
                           <option value="admin">Admin</option>
                           <option value="member">Member</option>
+                          <option value="viewer">Viewer</option>
                         </CFormSelect>
                         {saving === u.id && <CSpinner size="sm" color="primary" />}
                       </div>
@@ -169,31 +170,30 @@ export default function Users() {
             <CTableHead color="dark">
               <CTableRow>
                 <CTableHeaderCell>Feature</CTableHeaderCell>
+                <CTableHeaderCell className="text-center">Viewer</CTableHeaderCell>
                 <CTableHeaderCell className="text-center">Member</CTableHeaderCell>
                 <CTableHeaderCell className="text-center">Admin</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
             <CTableBody>
               {[
-                ['Dashboard', true, true],
-                ['View Contacts', true, true],
-                ['Edit Contacts', true, true],
-                ['Letterbox Drops', true, true],
-                ['Email Campaigns', true, true],
-                ['Route Map', true, true],
-                ['Profile', true, true],
-                ['Import Data', false, true],
-                ['Settings', false, true],
-                ['User Management', false, true],
-              ].map(([feature, member, admin]) => (
+                ['Dashboard',        true,  true,  true],
+                ['View Contacts',    true,  true,  true],
+                ['Edit Contacts',    false, true,  true],
+                ['Delete Contacts',  false, true,  true],
+                ['Letterbox Drops',  false, true,  true],
+                ['Email Campaigns',  false, true,  true],
+                ['Route Map',        true,  true,  true],
+                ['Profile',          true,  true,  true],
+                ['Import Data',      false, false, true],
+                ['Settings',         false, false, true],
+                ['User Management',  false, false, true],
+              ].map(([feature, viewer, member, admin]) => (
                 <CTableRow key={feature}>
                   <CTableDataCell>{feature}</CTableDataCell>
-                  <CTableDataCell className="text-center">
-                    {member ? '✅' : '—'}
-                  </CTableDataCell>
-                  <CTableDataCell className="text-center">
-                    {admin ? '✅' : '—'}
-                  </CTableDataCell>
+                  <CTableDataCell className="text-center">{viewer ? '✅' : '—'}</CTableDataCell>
+                  <CTableDataCell className="text-center">{member ? '✅' : '—'}</CTableDataCell>
+                  <CTableDataCell className="text-center">{admin ? '✅' : '—'}</CTableDataCell>
                 </CTableRow>
               ))}
             </CTableBody>
@@ -225,8 +225,9 @@ export default function Users() {
           <div className="mb-3">
             <label className="form-label fw-semibold">Role</label>
             <CFormSelect value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-              <option value="member">Member — can view and edit data</option>
-              <option value="admin">Admin — full access including settings</option>
+              <option value="viewer">Viewer — view contacts only, no editing</option>
+              <option value="member">Member — view and edit contacts, drops, campaigns</option>
+              <option value="admin">Admin — full access including settings and users</option>
             </CFormSelect>
           </div>
           <div className="alert alert-info small mb-0">

@@ -13,16 +13,22 @@ import { AppSidebarNav } from './AppSidebarNav'
 import { logo } from 'src/assets/brand/logo'
 import { sygnet } from 'src/assets/brand/sygnet'
 import { baseNav, adminNav } from '../_nav'
-import { useAdmin } from '../lib/useAdmin'
+import { usePermissions } from '../lib/usePermissions'
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
-  const isAdmin = useAdmin()
+  const { isAdmin, canManageCampaigns } = usePermissions()
 
-  // Admin sees everything, regular users see base nav only
-  const navigation = isAdmin ? [...baseNav, ...adminNav] : baseNav
+  // Filter nav based on role
+  const navigation = [
+    ...baseNav.filter(item => {
+      if (item.name === 'Email Campaigns' && !canManageCampaigns) return false
+      return true
+    }),
+    ...(isAdmin ? adminNav : []),
+  ]
 
   return (
     <CSidebar
