@@ -9,6 +9,7 @@ import {
   cilCloudUpload,
   cilSettings,
   cilUser,
+  cilUserPlus,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 
@@ -73,6 +74,12 @@ export const adminNav = [
   {
     component: CNavTitle,
     name: 'Admin',
+  },
+  {
+    component: CNavItem,
+    name: 'Users',
+    to: '/users',
+    icon: <CIcon icon={cilUserPlus} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,

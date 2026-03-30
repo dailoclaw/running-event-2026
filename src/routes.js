@@ -8,6 +8,7 @@ const RouteMap     = React.lazy(() => import('./views/marathon/RouteMap'))
 const ImportData   = React.lazy(() => import('./views/marathon/ImportData'))
 const Settings     = React.lazy(() => import('./views/marathon/Settings'))
 const Profile      = React.lazy(() => import('./views/auth/Profile'))
+const Users        = React.lazy(() => import('./views/admin/Users'))
 
 const routes = [
   { path: '/',          exact: true, name: 'Home' },
@@ -19,6 +20,7 @@ const routes = [
   { path: '/import',    name: 'Import Data',     element: ImportData },
   { path: '/settings',  name: 'Settings',        element: Settings   },
   { path: '/profile',   name: 'Profile',         element: Profile    },
+  { path: '/users',     name: 'Users',           element: Users      },
 ]
 
 export default routes
