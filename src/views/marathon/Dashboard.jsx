@@ -95,13 +95,13 @@ export default function Dashboard() {
           <StatCard label="Total Contacts" value={stats.total.toLocaleString()} sub="all sheets" color="primary" icon={cilPeople} to="/contacts" />
         </CCol>
         <CCol sm={6} xl={3}>
-          <StatCard label="Churches" value={stats.churches} sub="denominations" color="info" icon={cilPeople} to="/contacts" />
+          <StatCard label="Churches" value={stats.churches} sub="denominations" color="info" icon={cilPeople} to="/contacts?sheet=Churches" />
         </CCol>
         <CCol sm={6} xl={3}>
-          <StatCard label="Businesses" value={stats.businesses} sub="along route" color="warning" icon={cilPeople} to="/contacts" />
+          <StatCard label="Businesses" value={stats.businesses} sub="along route" color="warning" icon={cilPeople} to="/contacts?sheet=Businesses" />
         </CCol>
         <CCol sm={6} xl={3}>
-          <StatCard label="Properties" value={totalProps.toLocaleString()} sub={`${segments.length} street segments`} color="success" icon={cilEnvelopeLetter} to="/letterbox" />
+          <StatCard label="Properties" value={totalProps.toLocaleString()} sub={`${safeSegments.length} street segments`} color="success" icon={cilEnvelopeLetter} to="/letterbox" />
         </CCol>
       </CRow>
 

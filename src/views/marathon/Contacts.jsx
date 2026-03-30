@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   CCard, CCardBody, CCardHeader, CButton,
   CFormInput, CFormSelect, CFormTextarea, CBadge,
@@ -7,6 +7,7 @@ import {
   CRow, CCol, CNav, CNavItem, CNavLink, CTabContent, CTabPane,
 } from '@coreui/react'
 import { useMarathonStore } from '../../store/useMarathonStore'
+import { useSearchParams } from 'react-router-dom'
 
 const PER_PAGE = 50
 
@@ -135,12 +136,20 @@ function EditModal({ contact, onSave, onClose }) {
 
 export default function Contacts() {
   const { contacts, updateContact, deleteContact } = useMarathonStore()
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
-  const [sheetFilter, setSheetFilter] = useState('')
+  const [sheetFilter, setSheetFilter] = useState(searchParams.get('sheet') || '')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
-  const [viewing, setViewing] = useState(null)   // detail view
-  const [editing, setEditing] = useState(null)   // edit form
+  const [viewing, setViewing] = useState(null)
+  const [editing, setEditing] = useState(null)
+
+  // Re-apply filter if URL param changes (dashboard card click)
+  useEffect(() => {
+    const sheet = searchParams.get('sheet')
+    if (sheet) { setSheetFilter(sheet); setPage(1) }
+    else setSheetFilter('')
+  }, [searchParams])
 
   const sheets = useMemo(() => [...new Set(contacts.map((c) => c.sheet))].sort(), [contacts])
 
