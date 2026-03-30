@@ -6,7 +6,30 @@ import {
   CTable, CTableHead, CTableBody, CTableRow,
   CTableHeaderCell, CTableDataCell,
 } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilUser } from '@coreui/icons'
 import { supabase } from '../../lib/supabase'
+
+function Avatar({ url, name, size = 36 }) {
+  const initials = name
+    ? name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
+    : '?'
+  if (url) {
+    return (
+      <img src={url} alt={name}
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid #FF4D4D', flexShrink: 0 }} />
+    )
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', background: '#FF4D4D',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', fontWeight: 700, fontSize: size * 0.35, flexShrink: 0,
+    }}>
+      {initials !== '?' ? initials : <CIcon icon={cilUser} style={{ width: size * 0.5, height: size * 0.5 }} />}
+    </div>
+  )
+}
 
 export default function Users() {
   const [users, setUsers] = useState([])
@@ -22,7 +45,7 @@ export default function Users() {
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('profiles').select('*').order('created_at')
+    const { data, error } = await supabase.from('profiles').select('id, email, role, full_name, avatar_url, created_at').order('created_at')
     if (error) setError(error.message)
     else setUsers(data || [])
     setLoading(false)
@@ -90,7 +113,7 @@ export default function Users() {
             <CTable hover responsive className="mb-0">
               <CTableHead color="dark">
                 <CTableRow>
-                  <CTableHeaderCell>Email</CTableHeaderCell>
+                  <CTableHeaderCell>User</CTableHeaderCell>
                   <CTableHeaderCell>Role</CTableHeaderCell>
                   <CTableHeaderCell>Member Since</CTableHeaderCell>
                   <CTableHeaderCell>Change Role</CTableHeaderCell>
@@ -99,7 +122,15 @@ export default function Users() {
               <CTableBody>
                 {users.map((u) => (
                   <CTableRow key={u.id}>
-                    <CTableDataCell className="fw-semibold">{u.email}</CTableDataCell>
+                    <CTableDataCell>
+                      <div className="d-flex align-items-center gap-3">
+                        <Avatar url={u.avatar_url} name={u.full_name} />
+                        <div>
+                          <div className="fw-semibold">{u.full_name || <span className="text-muted fst-italic">No name set</span>}</div>
+                          <div className="small text-muted">{u.email}</div>
+                        </div>
+                      </div>
+                    </CTableDataCell>
                     <CTableDataCell>
                       <CBadge color={u.role === 'admin' ? 'danger' : 'secondary'}>
                         {u.role || 'member'}
