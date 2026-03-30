@@ -128,16 +128,17 @@ export default function EmailCampaigns() {
 
       <CRow className="g-3 mb-4">
         <CCol sm={4}>
-          <CCard className="stat-card">
-            <CCardBody>
+          <CCard className="stat-card h-100">
+            <CCardBody className="d-flex flex-column justify-content-between">
               <div className="small text-muted text-uppercase fw-semibold">Contacts with Email</div>
               <div className="fs-3 fw-bold text-primary">{withEmail.toLocaleString()}</div>
+              <div className="small text-muted">of {safeContacts.length.toLocaleString()} total contacts</div>
             </CCardBody>
           </CCard>
         </CCol>
         <CCol sm={4}>
-          <CCard className="stat-card">
-            <CCardBody>
+          <CCard className="stat-card h-100">
+            <CCardBody className="d-flex flex-column justify-content-between">
               <div className="small text-muted text-uppercase fw-semibold">Failed / Bounced</div>
               <div className="fs-3 fw-bold text-danger">{failed}</div>
               <div className="small text-muted">need re-sending</div>
@@ -145,8 +146,8 @@ export default function EmailCampaigns() {
           </CCard>
         </CCol>
         <CCol sm={4}>
-          <CCard className="stat-card">
-            <CCardBody>
+          <CCard className="stat-card h-100">
+            <CCardBody className="d-flex flex-column justify-content-between">
               <div className="small text-muted text-uppercase fw-semibold">Letterbox Only</div>
               <div className="fs-3 fw-bold text-secondary">{noEmail}</div>
               <div className="small text-muted">no email address</div>
