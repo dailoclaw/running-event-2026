@@ -1,5 +1,6 @@
+import { useState, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { getSegmentCoords } from '../data/segmentCoordinates'
 
@@ -34,8 +35,27 @@ function segmentIcon(status, size = 14) {
   })
 }
 
+// Flies map to show all markers of a given status
+function FlyToStatus({ segments, activeFilter, markerRefs }) {
+  const map = useMap()
+  if (!activeFilter) return null
+  const filtered = segments.filter(s => s.status === activeFilter)
+  if (filtered.length === 0) return null
+  const bounds = filtered.map((s, i) => getSegmentCoords(s.name, i, segments.length))
+  if (bounds.length === 1) {
+    map.flyTo(bounds[0], 15, { duration: 0.6 })
+    setTimeout(() => { const ref = markerRefs.current[filtered[0].id]; if (ref) ref.openPopup() }, 700)
+  } else {
+    map.flyToBounds(L.latLngBounds(bounds), { padding: [40, 40], duration: 0.8 })
+  }
+  return null
+}
+
 export default function DropStatusMap({ segments }) {
   const safeSegments = Array.isArray(segments) ? segments : []
+  const [activeFilter, setActiveFilter] = useState(null)
+  const [flyTrigger, setFlyTrigger] = useState(0)
+  const markerRefs = useRef({})
 
   const counts = {
     pending: safeSegments.filter(s => s.status === 'pending').length,
@@ -43,24 +63,54 @@ export default function DropStatusMap({ segments }) {
     complete: safeSegments.filter(s => s.status === 'complete').length,
   }
 
+  const handleFilterClick = (status) => {
+    setActiveFilter(prev => prev === status ? null : status)
+    setFlyTrigger(t => t + 1)
+  }
+
+  // Which segments to show — all if no filter, or just the filtered ones
+  const visibleSegments = activeFilter
+    ? safeSegments.filter(s => s.status === activeFilter)
+    : safeSegments
+
   return (
     <div>
-      {/* Legend */}
-      <div className="d-flex gap-4 mb-3 flex-wrap">
+      {/* Clickable legend pills */}
+      <div className="d-flex gap-3 mb-3 flex-wrap align-items-center">
         {Object.entries(STATUS_COLORS).map(([status, { fill, label }]) => (
-          <div key={status} className="d-flex align-items-center gap-2">
+          <button
+            key={status}
+            onClick={() => handleFilterClick(status)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
+              border: `2px solid ${fill}`,
+              background: activeFilter === status ? fill : 'transparent',
+              color: activeFilter === status ? '#fff' : 'inherit',
+              fontWeight: 600, fontSize: 13, transition: 'all 0.2s',
+            }}
+            title={`Click to show only ${label} segments on map`}
+          >
             <div style={{
-              width: 14, height: 14, borderRadius: '50%',
-              background: fill, border: '2px solid rgba(0,0,0,0.2)',
+              width: 10, height: 10, borderRadius: '50%',
+              background: activeFilter === status ? '#fff' : fill,
               flexShrink: 0,
             }} />
-            <span className="small fw-semibold">{label}</span>
-            <span className="small text-muted">({counts[status]})</span>
-          </div>
+            {label} ({counts[status]})
+          </button>
         ))}
-        <span className="small text-muted ms-auto align-self-center">
-          Click any marker for details
-        </span>
+        {activeFilter && (
+          <button
+            onClick={() => setActiveFilter(null)}
+            style={{
+              padding: '6px 12px', borderRadius: 999, border: '1px solid #ccc',
+              background: 'transparent', cursor: 'pointer', fontSize: 12, color: '#666',
+            }}
+          >
+            Show All
+          </button>
+        )}
+        <span className="small text-muted ms-auto">Click a status to filter · Click a marker for details</span>
       </div>
 
       {/* Map */}
@@ -76,26 +126,38 @@ export default function DropStatusMap({ segments }) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
           />
-
-          {/* Course line */}
           <Polyline
             positions={COURSE}
             pathOptions={{ color: '#1F3864', weight: 3, opacity: 0.4, dashArray: '6 4' }}
           />
 
-          {/* Segment markers */}
+          {/* Fly-to handler — re-triggers when flyTrigger changes */}
+          {activeFilter && (
+            <FlyToStatus
+              key={`${activeFilter}-${flyTrigger}`}
+              segments={safeSegments}
+              activeFilter={activeFilter}
+              markerRefs={markerRefs}
+            />
+          )}
+
+          {/* Show all markers but dim non-matching ones when filter active */}
           {safeSegments.map((seg, i) => {
             const coords = getSegmentCoords(seg.name, i, safeSegments.length)
             const { fill } = STATUS_COLORS[seg.status] || STATUS_COLORS.pending
+            const dimmed = activeFilter && seg.status !== activeFilter
+            const size = dimmed ? 8 : 14
             return (
               <Marker
                 key={seg.id}
                 position={coords}
-                icon={segmentIcon(seg.status)}
+                icon={segmentIcon(seg.status, size)}
+                opacity={dimmed ? 0.3 : 1}
+                ref={(r) => { if (r) markerRefs.current[seg.id] = r }}
               >
                 <Popup>
                   <div style={{ minWidth: 200 }}>
-                    <div className="fw-bold mb-1" style={{ fontSize: 13 }}>{seg.name}</div>
+                    <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 13 }}>{seg.name}</div>
                     <div style={{
                       display: 'inline-block', padding: '2px 8px', borderRadius: 4,
                       background: fill, color: '#fff', fontSize: 11, marginBottom: 8,
