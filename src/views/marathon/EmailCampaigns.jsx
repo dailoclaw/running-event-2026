@@ -3,6 +3,7 @@ import {
   CCard, CCardBody, CCardHeader, CButton, CFormInput, CFormTextarea, CFormSelect,
   CBadge, CRow, CCol, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell,
+  CAlert,
 } from '@coreui/react'
 import { useMarathonStore } from '../../store/useMarathonStore'
 
@@ -29,7 +30,7 @@ The 2026 Adelaide Marathon is coming to your neighbourhood!
 
 Join us on Sunday, 6 September 2026 as thousands of runners pass through your area on their way from Adelaide CBD to Glenelg.
 
-Temporary road closures will be in effect from approximately 6:00am to 12:00pm along Anzac Highway and nearby streets. We encourage you to come out and cheer on the runners — it's a fantastic community event!
+Temporary road closures will be in effect from approximately 6:00am to 12:00pm along Anzac Highway and nearby streets. We encourage you to come out and cheer on the runners — it is a fantastic community event!
 
 Full details including the course map are available at www.adelaidemarathon.com.au.
 
@@ -44,10 +45,14 @@ export default function EmailCampaigns() {
   const [sheetFilter, setSheetFilter] = useState('')
   const [onlyFailed, setOnlyFailed] = useState(false)
   const [onlyNotSent, setOnlyNotSent] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [validationMsg, setValidationMsg] = useState('')
 
-  const sheets = [...new Set(contacts.map((c) => c.sheet))].sort()
+  const safeContacts = Array.isArray(contacts) ? contacts : []
+  const safeCampaigns = Array.isArray(campaigns) ? campaigns : []
+  const sheets = [...new Set(safeContacts.map((c) => c.sheet))].sort()
 
-  const recipients = contacts.filter((c) => {
+  const recipients = safeContacts.filter((c) => {
     if (!c.email) return false
     if (sheetFilter && c.sheet !== sheetFilter) return false
     if (onlyFailed && c.emailFailed !== 'Yes') return false
@@ -55,24 +60,57 @@ export default function EmailCampaigns() {
     return true
   })
 
-  const save = () => {
-    if (!campName || !subject || !body) return
-    addCampaign({ id: uid(), name: campName, subject, body, recipients: recipients.map((c) => c.id), sentAt: '', status: 'draft' })
-    setShowNew(false); setCampName(''); setSubject(''); setBody('')
+  const resetForm = () => {
+    setCampName(''); setSubject(''); setBody('')
+    setSheetFilter(''); setOnlyFailed(false); setOnlyNotSent(false)
+    setValidationMsg('')
+  }
+
+  const handleSave = () => {
+    const nameOk = campName.trim().length > 0
+    const subjectOk = subject.trim().length > 0
+    const bodyOk = body.trim().length > 0
+    if (!nameOk || !subjectOk || !bodyOk) {
+      setValidationMsg(
+        !nameOk ? 'Campaign name is required.' :
+        !subjectOk ? 'Email subject is required.' :
+        'Message body is required — pick a template or write your own.'
+      )
+      return
+    }
+    setValidationMsg('')
+    addCampaign({
+      id: uid(),
+      name: campName.trim(),
+      subject: subject.trim(),
+      body: body.trim(),
+      recipients: recipients.map((c) => c.id),
+      sentAt: '',
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+    })
+    setShowNew(false)
+    resetForm()
+    setSaved(true)
+    setTimeout(() => setSaved(false), 4000)
   }
 
   const exportCSV = (campaign) => {
-    const recs = contacts.filter((c) => campaign.recipients.includes(c.id))
-    const rows = [['Email','Organisation','Contact Person','Suburb'], ...recs.map((c) => [c.email,c.organisation,c.contactPerson,c.suburb])]
-    const csv = rows.map((r) => r.map((v) => `"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n')
+    const recs = safeContacts.filter((c) => campaign.recipients.includes(c.id))
+    const rows = [
+      ['Email', 'Organisation', 'Contact Person', 'Suburb'],
+      ...recs.map((c) => [c.email, c.organisation, c.contactPerson, c.suburb]),
+    ]
+    const csv = rows.map((r) => r.map((v) => `"${(v || '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `${campaign.name.replace(/\s+/g,'_')}_recipients.csv`; a.click()
+    a.download = `${campaign.name.replace(/\s+/g, '_')}_recipients.csv`
+    a.click()
   }
 
-  const withEmail = contacts.filter((c) => c.email).length
-  const failed = contacts.filter((c) => c.emailFailed === 'Yes').length
-  const noEmail = contacts.filter((c) => !c.email).length
+  const withEmail = safeContacts.filter((c) => c.email).length
+  const failed = safeContacts.filter((c) => c.emailFailed === 'Yes').length
+  const noEmail = safeContacts.filter((c) => !c.email).length
 
   return (
     <>
@@ -81,8 +119,10 @@ export default function EmailCampaigns() {
           <h4 className="fw-bold mb-1">Email Campaigns</h4>
           <span className="text-muted small">Build campaigns and export recipient lists for mail-merge</span>
         </div>
-        <CButton color="primary" onClick={() => setShowNew(true)}>+ New Campaign</CButton>
+        <CButton color="primary" onClick={() => { resetForm(); setShowNew(true) }}>+ New Campaign</CButton>
       </div>
+
+      {saved && <CAlert color="success" className="mb-3">Campaign saved successfully!</CAlert>}
 
       <CRow className="g-3 mb-4">
         <CCol sm={4}>
@@ -113,9 +153,9 @@ export default function EmailCampaigns() {
         </CCol>
       </CRow>
 
-      {campaigns.length > 0 ? (
+      {safeCampaigns.length > 0 ? (
         <CCard className="stat-card mb-4">
-          <CCardHeader className="fw-semibold">Campaigns</CCardHeader>
+          <CCardHeader className="fw-semibold">Campaigns ({safeCampaigns.length})</CCardHeader>
           <CCardBody className="p-0">
             <CTable hover responsive className="mb-0">
               <CTableHead color="dark">
@@ -128,25 +168,33 @@ export default function EmailCampaigns() {
                 </CTableRow>
               </CTableHead>
               <CTableBody>
-                {campaigns.map((c) => (
+                {safeCampaigns.map((c) => (
                   <CTableRow key={c.id}>
                     <CTableDataCell className="fw-semibold">{c.name}</CTableDataCell>
                     <CTableDataCell className="text-muted small">{c.subject}</CTableDataCell>
-                    <CTableDataCell>{c.recipients.length.toLocaleString()}</CTableDataCell>
+                    <CTableDataCell>{(c.recipients || []).length.toLocaleString()}</CTableDataCell>
                     <CTableDataCell>
                       <CBadge color={c.status === 'sent' ? 'success' : 'warning'}>{c.status}</CBadge>
                     </CTableDataCell>
                     <CTableDataCell>
                       <div className="d-flex gap-1">
-                        <CButton size="sm" color="primary" variant="outline" onClick={() => exportCSV(c)}>Export CSV</CButton>
+                        <CButton size="sm" color="primary" variant="outline" onClick={() => exportCSV(c)}>
+                          Export CSV
+                        </CButton>
                         {c.status === 'draft' && (
                           <CButton size="sm" color="success" variant="outline"
                             onClick={() => updateCampaign(c.id, { status: 'sent', sentAt: new Date().toISOString() })}>
                             Mark Sent
                           </CButton>
                         )}
+                        {c.status === 'sent' && (
+                          <CButton size="sm" color="secondary" variant="outline"
+                            onClick={() => updateCampaign(c.id, { status: 'draft', sentAt: '' })}>
+                            Revert
+                          </CButton>
+                        )}
                         <CButton size="sm" color="danger" variant="ghost"
-                          onClick={() => { if (confirm('Delete?')) deleteCampaign(c.id) }}>✕</CButton>
+                          onClick={() => { if (confirm('Delete campaign?')) deleteCampaign(c.id) }}>✕</CButton>
                       </div>
                     </CTableDataCell>
                   </CTableRow>
@@ -157,33 +205,56 @@ export default function EmailCampaigns() {
         </CCard>
       ) : (
         <CCard className="stat-card mb-4">
-          <CCardBody className="text-center text-muted py-5">No campaigns yet. Create one to get started.</CCardBody>
+          <CCardBody className="text-center text-muted py-5">
+            No campaigns yet. Click <strong>+ New Campaign</strong> to create one.
+          </CCardBody>
         </CCard>
       )}
 
       {/* New Campaign Modal */}
-      <CModal visible={showNew} onClose={() => setShowNew(false)} size="xl">
-        <CModalHeader><CModalTitle>New Email Campaign</CModalTitle></CModalHeader>
+      <CModal visible={showNew} onClose={() => setShowNew(false)} size="xl" backdrop="static">
+        <CModalHeader closeButton>
+          <CModalTitle>New Email Campaign</CModalTitle>
+        </CModalHeader>
         <CModalBody>
+          {validationMsg && <CAlert color="danger" className="mb-3">{validationMsg}</CAlert>}
+
           <CRow className="g-3 mb-3">
             <CCol md={6}>
               <label className="form-label fw-semibold">Campaign Name *</label>
-              <CFormInput placeholder="e.g. Road Closure Notice — Sept 2026" value={campName} onChange={(e) => setCampName(e.target.value)} />
+              <CFormInput
+                placeholder="e.g. Road Closure Notice — Sept 2026"
+                value={campName}
+                onChange={(e) => setCampName(e.target.value)}
+              />
             </CCol>
             <CCol md={6}>
               <label className="form-label fw-semibold">Email Subject *</label>
-              <CFormInput placeholder="e.g. 2026 Adelaide Marathon — Road Closure Notice" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              <CFormInput
+                placeholder="e.g. 2026 Adelaide Marathon — Road Closure Notice"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
             </CCol>
           </CRow>
 
           <div className="mb-3">
-            <label className="form-label fw-semibold">Message</label>
+            <label className="form-label fw-semibold">Message *</label>
             <div className="d-flex gap-2 mb-2">
-              <CButton size="sm" color="secondary" variant="outline" onClick={() => setBody(TMPL_CLOSURE)}>Road Closure Template</CButton>
-              <CButton size="sm" color="secondary" variant="outline" onClick={() => setBody(TMPL_LETTERBOX)}>Letterbox Notice Template</CButton>
+              <CButton size="sm" color="secondary" variant="outline" onClick={() => setBody(TMPL_CLOSURE)}>
+                Road Closure Template
+              </CButton>
+              <CButton size="sm" color="secondary" variant="outline" onClick={() => setBody(TMPL_LETTERBOX)}>
+                Letterbox Notice Template
+              </CButton>
               <CButton size="sm" color="secondary" variant="ghost" onClick={() => setBody('')}>Clear</CButton>
             </div>
-            <CFormTextarea rows={10} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write your message or pick a template above..." />
+            <CFormTextarea
+              rows={10}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Write your message or pick a template above..."
+            />
           </div>
 
           <div className="mb-3">
@@ -216,8 +287,12 @@ export default function EmailCampaigns() {
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="primary" onClick={save} disabled={!campName || !subject || !body}>Save Campaign</CButton>
-          <CButton color="secondary" onClick={() => setShowNew(false)}>Cancel</CButton>
+          <CButton color="primary" onClick={handleSave}>
+            Save Campaign
+          </CButton>
+          <CButton color="secondary" variant="outline" onClick={() => { setShowNew(false); resetForm() }}>
+            Cancel
+          </CButton>
         </CModalFooter>
       </CModal>
     </>
