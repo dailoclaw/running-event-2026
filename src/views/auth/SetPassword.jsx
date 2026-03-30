@@ -49,6 +49,8 @@ export default function SetPassword() {
     if (error) { setError(error.message); setLoading(false); return }
     setDone(true)
     setLoading(false)
+    // Give Supabase a moment to update the session, then go to app
+    setTimeout(() => { window.location.href = '/' }, 1500)
   }
 
   return (
@@ -99,15 +101,13 @@ export default function SetPassword() {
               </>
             )}
 
-            {/* Success — password set */}
+            {/* Success — password set — auto redirect */}
             {done && (
               <div className="text-center">
                 <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
                 <h5 className="fw-bold mb-2">Password set!</h5>
-                <p className="text-muted mb-4">Your account is ready. Click below to sign in.</p>
-                <CButton color="primary" className="w-100" onClick={() => window.location.href = '/'}>
-                  Go to Sign In
-                </CButton>
+                <p className="text-muted mb-4">Taking you to the dashboard...</p>
+                <CSpinner color="primary" />
               </div>
             )}
 
