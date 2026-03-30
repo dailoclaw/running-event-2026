@@ -3,8 +3,22 @@ import {
   CCard, CCardBody, CCardHeader, CButton, CFormInput, CFormSelect, CBadge,
   CRow, CCol, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell,
-  CProgress, CAlert,
+  CAlert,
 } from '@coreui/react'
+
+function ProgressBar({ value, color = '#198754' }) {
+  return (
+    <div style={{ background: '#e9ecef', borderRadius: 6, height: 8, overflow: 'hidden', marginTop: 6 }}>
+      <div style={{
+        width: `${Math.min(Math.max(value, 0), 100)}%`,
+        height: '100%',
+        background: color,
+        borderRadius: 6,
+        transition: 'width 0.4s ease',
+      }} />
+    </div>
+  )
+}
 import { useMarathonStore } from '../../store/useMarathonStore'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
@@ -151,7 +165,7 @@ export default function Letterbox() {
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Overall Progress</div>
               <div className="fs-3 fw-bold text-success">{completedPct}%</div>
-              <CProgress value={completedPct} color="success" className="mt-2" style={{ height: 8 }} />
+              <ProgressBar value={completedPct} color="#198754" />
             </CCardBody>
           </CCard>
         </CCol>
