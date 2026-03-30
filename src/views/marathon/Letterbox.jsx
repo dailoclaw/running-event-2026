@@ -4,8 +4,9 @@ import {
   CCard, CCardBody, CCardHeader, CButton, CFormInput, CFormSelect, CBadge,
   CRow, CCol, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
   CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell,
-  CAlert,
+  CAlert, CNav, CNavItem, CNavLink, CTabContent, CTabPane,
 } from '@coreui/react'
+import DropStatusMap from '../../components/DropStatusMap'
 
 function ProgressBar({ value, color = '#198754' }) {
   return (
@@ -45,6 +46,7 @@ export default function Letterbox() {
   const [segFilter, setSegFilter] = useState('')
   const [validationMsg, setValidationMsg] = useState('')
   const [saved, setSaved] = useState(false)
+  const [activeTab, setActiveTab] = useState('planner')
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new()
@@ -208,20 +210,47 @@ export default function Letterbox() {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h4 className="fw-bold mb-1">Letterbox Drop Planner</h4>
           <span className="text-muted small">Organise and track community letterbox drops along the marathon route</span>
         </div>
         <div className="d-flex gap-2">
-          <CButton color="success" variant="outline" size="sm" onClick={exportToExcel}>
-            Export Excel
-          </CButton>
+          <CButton color="success" variant="outline" size="sm" onClick={exportToExcel}>Export Excel</CButton>
           <CButton color="primary" onClick={() => { resetForm(); setShowNew(true) }}>+ New Drop Run</CButton>
         </div>
       </div>
 
+      {/* Tabs */}
+      <CNav variant="tabs" className="mb-4">
+        <CNavItem>
+          <CNavLink active={activeTab === 'planner'} style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('planner')}>
+            Planner
+          </CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink active={activeTab === 'map'} style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('map')}>
+            Drop Status Map
+          </CNavLink>
+        </CNavItem>
+      </CNav>
+
       {saved && <CAlert color="success" className="mb-3">Drop run created successfully!</CAlert>}
+
+      {/* Map Tab */}
+      {activeTab === 'map' && (
+        <CCard className="stat-card">
+          <CCardHeader className="fw-semibold">Drop Status Map — Segment Coverage</CCardHeader>
+          <CCardBody>
+            <DropStatusMap segments={safeSegments} />
+          </CCardBody>
+        </CCard>
+      )}
+
+      {/* Planner Tab */}
+      {activeTab === 'planner' && <>
 
       {/* Summary */}
       <CRow className="g-3 mb-4">
@@ -349,6 +378,8 @@ export default function Letterbox() {
           </CTable>
         </CCardBody>
       </CCard>
+
+      </>} {/* end planner tab */}
 
       {/* New Run Modal */}
       <CModal visible={showNew} onClose={() => setShowNew(false)} size="xl" backdrop="static">
