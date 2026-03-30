@@ -15,8 +15,12 @@ function Root() {
   const { user, loading, needsPassword } = useAuth()
 
   if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />
+
+  // If this is an invite or recovery link — always show set password
+  // regardless of whether user/session is resolved yet
+  if (needsPassword) return <SetPassword />
+
   if (loading) return null
-  if (user && needsPassword) return <SetPassword />
   if (!user) return <Login />
   return <App />
 }
