@@ -49,8 +49,9 @@ export default function SetPassword() {
     if (error) { setError(error.message); setLoading(false); return }
     setDone(true)
     setLoading(false)
-    // Give Supabase a moment to update the session, then go to app
-    setTimeout(() => { window.location.href = '/' }, 1500)
+    // Refresh session after password change (Supabase invalidates old token)
+    await supabase.auth.refreshSession()
+    setTimeout(() => { window.location.href = '/' }, 1200)
   }
 
   return (
@@ -103,10 +104,10 @@ export default function SetPassword() {
 
             {/* Success — password set — auto redirect */}
             {done && (
-              <div className="text-center">
-                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-                <h5 className="fw-bold mb-2">Password set!</h5>
-                <p className="text-muted mb-4">Taking you to the dashboard...</p>
+              <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+                <h5 style={{ fontWeight: 700, marginBottom: 8 }}>Password set!</h5>
+                <p style={{ color: '#6c757d', marginBottom: 20 }}>Taking you to the dashboard...</p>
                 <CSpinner color="primary" />
               </div>
             )}
