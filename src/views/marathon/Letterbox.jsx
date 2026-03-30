@@ -257,16 +257,17 @@ export default function Letterbox() {
       {/* Summary */}
       <CRow className="g-3 mb-4">
         <CCol sm={3}>
-          <CCard className="stat-card">
+          <CCard className="stat-card h-100">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Total Properties</div>
               <div className="fs-3 fw-bold text-primary">{totalProps.toLocaleString()}</div>
-              <div className="small text-muted">{safeSegments.length} street segments</div>
+              <ProgressBar value={100} color="#e9ecef" />
+              <div className="small text-muted mt-1">{safeSegments.length} street segments</div>
             </CCardBody>
           </CCard>
         </CCol>
         <CCol sm={3}>
-          <CCard className="stat-card">
+          <CCard className="stat-card h-100">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Completed</div>
               <div className="fs-3 fw-bold text-success">{completedPct}%</div>
@@ -276,7 +277,7 @@ export default function Letterbox() {
           </CCard>
         </CCol>
         <CCol sm={3}>
-          <CCard className="stat-card">
+          <CCard className="stat-card h-100">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">In Progress</div>
               <div className="fs-3 fw-bold text-info">{inProgressPct}%</div>
@@ -286,13 +287,14 @@ export default function Letterbox() {
           </CCard>
         </CCol>
         <CCol sm={3}>
-          <CCard className="stat-card">
+          <CCard className="stat-card h-100">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Drop Runs</div>
               <div className="fs-3 fw-bold text-warning">
                 {safeDropRuns.filter(r => r.status === 'complete').length} / {safeDropRuns.length}
               </div>
-              <div className="small text-muted">complete</div>
+              <ProgressBar value={safeDropRuns.length ? Math.round((safeDropRuns.filter(r => r.status === 'complete').length / safeDropRuns.length) * 100) : 0} color="#ffc107" />
+              <div className="small text-muted mt-1">complete</div>
             </CCardBody>
           </CCard>
         </CCol>
