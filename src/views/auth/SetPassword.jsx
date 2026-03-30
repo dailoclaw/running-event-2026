@@ -1,0 +1,107 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../../lib/supabase'
+import { CCard, CCardBody, CButton, CFormInput, CAlert, CSpinner } from '@coreui/react'
+
+export default function SetPassword() {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+
+  // Supabase puts the token in the URL hash on invite/reset links
+  useEffect(() => {
+    supabase.auth.getSession()
+  }, [])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (password !== confirm) { setError('Passwords do not match.'); return }
+    setLoading(true); setError('')
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) setError(error.message)
+    else setDone(true)
+    setLoading(false)
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#1F3864',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{
+        position: 'fixed', inset: 0,
+        backgroundImage: 'url(/splash.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center top',
+        opacity: 0.15,
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="/runner-192.png" alt="Running" style={{ width: 72, height: 72, borderRadius: 16, marginBottom: 16 }} />
+          <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>Marathon Event Manager</div>
+          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginTop: 4, letterSpacing: 2, textTransform: 'uppercase' }}>
+            Adelaide 2026
+          </div>
+        </div>
+
+        <CCard style={{ borderRadius: 16, border: 'none', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+          <CCardBody style={{ padding: '32px' }}>
+            {done ? (
+              <div className="text-center">
+                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+                <h5 className="fw-bold mb-2">Password set!</h5>
+                <p className="text-muted mb-4">You can now sign in with your new password.</p>
+                <CButton color="primary" className="w-100" onClick={() => window.location.href = '/'}>
+                  Go to Sign In
+                </CButton>
+              </div>
+            ) : (
+              <>
+                <h5 className="fw-bold mb-1">Set Your Password</h5>
+                <p className="text-muted small mb-4">Choose a password to activate your account</p>
+
+                {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
+
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">New Password</label>
+                    <CFormInput
+                      type="password"
+                      placeholder="Min. 8 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold">Confirm Password</label>
+                    <CFormInput
+                      type="password"
+                      placeholder="Repeat your password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <CButton type="submit" color="primary" className="w-100" disabled={loading}>
+                    {loading ? <CSpinner size="sm" className="me-2" /> : null}
+                    {loading ? 'Saving...' : 'Set Password'}
+                  </CButton>
+                </form>
+              </>
+            )}
+          </CCardBody>
+        </CCard>
+      </div>
+    </div>
+  )
+}
