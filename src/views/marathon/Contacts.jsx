@@ -6,9 +6,10 @@ import {
   CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell,
   CRow, CCol, CNav, CNavItem, CNavLink, CTabContent, CTabPane,
 } from '@coreui/react'
-import { useMarathonStore } from '../../store/useMarathonStore'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '../../lib/usePermissions'
+import { useContacts } from '../../hooks/useContacts'
+import { CSpinner } from '@coreui/react'
 
 const PER_PAGE = 50
 
@@ -136,7 +137,7 @@ function EditModal({ contact, onSave, onClose }) {
 }
 
 export default function Contacts() {
-  const { contacts, updateContact, deleteContact } = useMarathonStore()
+  const { contacts, loading, updateContact, deleteContact } = useContacts()
   const { canEditContacts, canDeleteContacts } = usePermissions()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
@@ -194,8 +195,12 @@ export default function Contacts() {
     a.download = 'contacts_export.csv'; a.click()
   }
 
+  if (loading) {
+    return <div className="text-center py-5"><CSpinner color="primary" /></div>
+  }
+
   if (contacts.length === 0) {
-    return <div className="text-center py-5 text-muted">No contacts loaded. <a href="/import">Import your spreadsheet</a>.</div>
+    return <div className="text-center py-5 text-muted">No contacts found.</div>
   }
 
   return (

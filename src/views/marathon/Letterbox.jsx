@@ -20,6 +20,7 @@ function ProgressBar({ value, color = '#198754' }) {
   )
 }
 import { useMarathonStore } from '../../store/useMarathonStore'
+import { useSegments } from '../../hooks/useSegments'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 
@@ -29,7 +30,8 @@ const STATUS_COLOR = { pending: 'warning', 'in-progress': 'info', complete: 'suc
 const NEXT_STATUS = { pending: 'in-progress', 'in-progress': 'complete', complete: 'pending' }
 
 export default function Letterbox() {
-  const { segments, dropRuns, updateSegment, addDropRun, updateDropRun, deleteDropRun } = useMarathonStore()
+  const { segments, updateSegment } = useSegments()
+  const { dropRuns, addDropRun, updateDropRun, deleteDropRun } = useMarathonStore()
 
   const safeSegments = Array.isArray(segments) ? segments : []
   const safeDropRuns = Array.isArray(dropRuns) ? dropRuns : []

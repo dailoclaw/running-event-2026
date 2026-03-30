@@ -1,13 +1,15 @@
 import {
   CCard, CCardBody, CCardHeader,
-  CCol, CRow, CButton, CBadge,
+  CCol, CRow, CButton, CBadge, CSpinner,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilPeople, cilEnvelopeLetter, cilEnvelopeOpen,
-  cilMap, cilCloudUpload, cilCheckCircle,
+  cilMap, cilCloudUpload,
 } from '@coreui/icons'
 import { useNavigate } from 'react-router-dom'
+import { useContacts } from '../../hooks/useContacts'
+import { useSegments } from '../../hooks/useSegments'
 import { useMarathonStore } from '../../store/useMarathonStore'
 
 function ProgressBar({ value, color = '#0d6efd' }) {
@@ -15,9 +17,7 @@ function ProgressBar({ value, color = '#0d6efd' }) {
     <div style={{ background: '#e9ecef', borderRadius: 6, height: 10, overflow: 'hidden' }}>
       <div style={{
         width: `${Math.min(Math.max(value, 0), 100)}%`,
-        height: '100%',
-        background: color,
-        borderRadius: 6,
+        height: '100%', background: color, borderRadius: 6,
         transition: 'width 0.4s ease',
       }} />
     </div>
@@ -44,7 +44,11 @@ function StatCard({ label, value, sub, color, icon, to }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { contacts, segments, dropRuns, getStats } = useMarathonStore()
+  const { contacts, loading: cLoading, getStats } = useContacts()
+  const { segments, loading: sLoading } = useSegments()
+  const { dropRuns } = useMarathonStore()
+
+  const loading = cLoading || sLoading
   const stats = getStats()
 
   const safeSegments = Array.isArray(segments) ? segments : []
@@ -55,29 +59,18 @@ export default function Dashboard() {
   const completedSegments = safeSegments.filter((s) => s.status === 'complete').length
   const completedRuns = safeDropRuns.filter((r) => r.status === 'complete').length
 
-  // Email stats
   const emailedPct = stats.total ? Math.round((stats.emailed / stats.total) * 100) : 0
   const respondedPct = stats.emailed ? Math.round((stats.responded / stats.emailed) * 100) : 0
   const failedPct = stats.total ? Math.round((stats.failed / stats.total) * 100) : 0
-
-  // Letterbox — match Letterbox page exactly (segment-based)
   const propsPct = totalProps ? Math.round((completedProps / totalProps) * 100) : 0
   const segPct = safeSegments.length ? Math.round((completedSegments / safeSegments.length) * 100) : 0
   const runsPct = safeDropRuns.length ? Math.round((completedRuns / safeDropRuns.length) * 100) : 0
 
-  if (contacts.length === 0) {
+  if (loading) {
     return (
       <div className="text-center py-5">
-        <div style={{ fontSize: 72 }}>🏃</div>
-        <h2 className="fw-bold mt-3 mb-2">2026 Adelaide Marathon Event Manager</h2>
-        <p className="text-muted mb-4">
-          Import your cleaned contact spreadsheet to get started.<br />
-          Plan letterbox drops, manage email campaigns, and track outreach — all in one place.
-        </p>
-        <CButton color="primary" size="lg" onClick={() => navigate('/import')}>
-          <CIcon icon={cilCloudUpload} className="me-2" />
-          Import Spreadsheet
-        </CButton>
+        <CSpinner color="primary" className="mb-3" />
+        <div className="text-muted">Loading data...</div>
       </div>
     )
   }
@@ -89,7 +82,6 @@ export default function Dashboard() {
         <span className="text-muted small">2026 Adelaide Marathon — Community Outreach Overview</span>
       </div>
 
-      {/* Stat cards */}
       <CRow className="g-3 mb-4">
         <CCol sm={6} xl={3}>
           <StatCard label="Total Contacts" value={stats.total.toLocaleString()} sub="all sheets" color="primary" icon={cilPeople} to="/contacts" />
@@ -106,7 +98,6 @@ export default function Dashboard() {
       </CRow>
 
       <CRow className="g-3 mb-4">
-        {/* Email progress */}
         <CCol md={6}>
           <CCard className="stat-card h-100">
             <CCardHeader className="fw-semibold d-flex justify-content-between align-items-center">
@@ -142,7 +133,6 @@ export default function Dashboard() {
           </CCard>
         </CCol>
 
-        {/* Letterbox progress */}
         <CCol md={6}>
           <CCard className="stat-card h-100">
             <CCardHeader className="fw-semibold d-flex justify-content-between align-items-center">
@@ -176,7 +166,6 @@ export default function Dashboard() {
         </CCol>
       </CRow>
 
-      {/* Quick actions */}
       <CCard className="stat-card">
         <CCardHeader className="fw-semibold">Quick Actions</CCardHeader>
         <CCardBody className="d-flex gap-2 flex-wrap">

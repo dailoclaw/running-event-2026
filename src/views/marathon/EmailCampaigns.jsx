@@ -6,6 +6,7 @@ import {
   CAlert,
 } from '@coreui/react'
 import { useMarathonStore } from '../../store/useMarathonStore'
+import { useContacts } from '../../hooks/useContacts'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 
@@ -37,7 +38,8 @@ Full details including the course map are available at www.adelaidemarathon.com.
 Adelaide Marathon 2026 Team`
 
 export default function EmailCampaigns() {
-  const { contacts, campaigns, addCampaign, updateCampaign, deleteCampaign } = useMarathonStore()
+  const { contacts } = useContacts()
+  const { campaigns, addCampaign, updateCampaign, deleteCampaign } = useMarathonStore()
   const [showNew, setShowNew] = useState(false)
   const [campName, setCampName] = useState('')
   const [subject, setSubject] = useState('')
