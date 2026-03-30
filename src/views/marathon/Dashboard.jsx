@@ -10,7 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useContacts } from '../../hooks/useContacts'
 import { useSegments } from '../../hooks/useSegments'
-import { useMarathonStore } from '../../store/useMarathonStore'
+import { useDropRuns } from '../../hooks/useDropRuns'
 
 function ProgressBar({ value, color = '#0d6efd' }) {
   return (
@@ -46,9 +46,9 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { contacts, loading: cLoading, getStats } = useContacts()
   const { segments, loading: sLoading } = useSegments()
-  const { dropRuns } = useMarathonStore()
+  const { dropRuns, loading: dLoading } = useDropRuns()
 
-  const loading = cLoading || sLoading
+  const loading = cLoading || sLoading || dLoading
   const stats = getStats()
 
   const safeSegments = Array.isArray(segments) ? segments : []

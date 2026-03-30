@@ -5,8 +5,8 @@ import {
   CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell,
   CAlert,
 } from '@coreui/react'
-import { useMarathonStore } from '../../store/useMarathonStore'
 import { useContacts } from '../../hooks/useContacts'
+import { useCampaigns } from '../../hooks/useCampaigns'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 
@@ -39,7 +39,7 @@ Adelaide Marathon 2026 Team`
 
 export default function EmailCampaigns() {
   const { contacts } = useContacts()
-  const { campaigns, addCampaign, updateCampaign, deleteCampaign } = useMarathonStore()
+  const { campaigns, addCampaign, updateCampaign, deleteCampaign } = useCampaigns()
   const [showNew, setShowNew] = useState(false)
   const [campName, setCampName] = useState('')
   const [subject, setSubject] = useState('')
