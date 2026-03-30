@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useProfile } from '../../context/ProfileContext'
@@ -16,6 +16,11 @@ export default function Profile() {
 
   const [fullName, setFullName] = useState(profile.full_name || '')
   const [saving, setSaving] = useState(false)
+
+  // Sync local form state if context updates (e.g. on re-mount after navigation)
+  useEffect(() => {
+    setFullName(profile.full_name || '')
+  }, [profile.full_name])
   const [uploading, setUploading] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
