@@ -19,12 +19,14 @@ import { cilContrast, cilMenu, cilMoon, cilSun } from '@coreui/icons'
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import { useSettings } from '../context/SettingsContext'
 
 const AppHeader = () => {
   const headerRef = useRef()
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  const { settings } = useSettings()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,8 +47,13 @@ const AppHeader = () => {
           <CIcon icon={cilMenu} size="lg" />
         </CHeaderToggler>
 
+        {/* Event name in header */}
+        <span className="d-none d-md-block fw-semibold ms-3" style={{ fontSize: 14, color: 'var(--cui-body-color)' }}>
+          {settings.eventName}
+        </span>
+
         {/* Main nav links */}
-        <CHeaderNav className="d-none d-md-flex">
+        <CHeaderNav className="d-none d-md-flex ms-3">
           <CNavItem>
             <CNavLink to="/dashboard" as={NavLink}>Dashboard</CNavLink>
           </CNavItem>

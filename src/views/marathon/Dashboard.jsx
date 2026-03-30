@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useContacts } from '../../hooks/useContacts'
 import { useSegments } from '../../hooks/useSegments'
 import { useDropRuns } from '../../hooks/useDropRuns'
+import { useSettings } from '../../context/SettingsContext'
 
 function ProgressBar({ value, color = '#0d6efd' }) {
   return (
@@ -44,6 +45,7 @@ function StatCard({ label, value, sub, color, icon, to }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const { contacts, loading: cLoading, getStats } = useContacts()
   const { segments, loading: sLoading } = useSegments()
   const { dropRuns, loading: dLoading } = useDropRuns()
@@ -79,7 +81,7 @@ export default function Dashboard() {
     <>
       <div className="mb-4">
         <h4 className="fw-bold mb-1">Dashboard</h4>
-        <span className="text-muted small">2026 Adelaide Marathon — Community Outreach Overview</span>
+        <span className="text-muted small">{settings.eventName} — Community Outreach Overview</span>
       </div>
 
       <CRow className="g-3 mb-4">

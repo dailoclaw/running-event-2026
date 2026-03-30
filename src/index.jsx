@@ -8,6 +8,7 @@ import store from './store'
 import SplashScreen from './components/SplashScreen'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProfileProvider } from './context/ProfileContext'
+import { SettingsProvider } from './context/SettingsContext'
 import Login from './views/auth/Login'
 import SetPassword from './views/auth/SetPassword'
 
@@ -53,7 +54,7 @@ function Root() {
   if (!user) return <Login />
 
   // 5. All good — show app wrapped in profile context
-  return <ProfileProvider><App /></ProfileProvider>
+  return <SettingsProvider><ProfileProvider><App /></ProfileProvider></SettingsProvider>
 }
 
 createRoot(document.getElementById('root')).render(

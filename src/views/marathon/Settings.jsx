@@ -3,32 +3,17 @@ import {
   CCard, CCardBody, CCardHeader,
   CFormInput, CFormTextarea, CButton, CAlert, CRow, CCol,
 } from '@coreui/react'
-
-const DEFAULTS = {
-  eventName: '2026 Adelaide Marathon',
-  eventDate: '2026-09-06',
-  startTime: '07:00',
-  startVenue: 'Victoria Square, Adelaide CBD SA 5000',
-  finishVenue: 'Glenelg Jetty, Glenelg SA 5045',
-  distance: '42.2km (Full Marathon)',
-  organiserName: '',
-  organiserEmail: '',
-  website: 'www.adelaidemarathon.com.au',
-  phone: '',
-  description: 'The Adelaide Marathon runs from Victoria Square in the city through Anzac Highway to the Glenelg Jetty. The event affects residential and commercial properties along the route.',
-}
+import { useSettings } from '../../context/SettingsContext'
 
 export default function Settings() {
-  const [s, setS] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('marathon-settings') || 'null') || DEFAULTS }
-    catch { return DEFAULTS }
-  })
+  const { settings, updateSettings } = useSettings()
+  const [form, setForm] = useState({ ...settings })
   const [saved, setSaved] = useState(false)
 
-  const upd = (k, v) => setS((prev) => ({ ...prev, [k]: v }))
+  const upd = (k, v) => setForm((prev) => ({ ...prev, [k]: v }))
 
   const save = () => {
-    localStorage.setItem('marathon-settings', JSON.stringify(s))
+    updateSettings(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
@@ -42,7 +27,7 @@ export default function Settings() {
     { key: 'finishVenue', label: 'Finish Venue / Address' },
     { key: 'organiserName', label: 'Organiser Name' },
     { key: 'organiserEmail', label: 'Organiser Email', type: 'email' },
-    { key: 'website', label: 'Website URL', type: 'url' },
+    { key: 'website', label: 'Website URL' },
     { key: 'phone', label: 'Contact Phone' },
   ]
 
@@ -50,7 +35,7 @@ export default function Settings() {
     <>
       <div className="mb-4">
         <h4 className="fw-bold mb-1">Settings</h4>
-        <span className="text-muted small">Event details used in email templates and print sheets</span>
+        <span className="text-muted small">Event details used across the dashboard and email templates</span>
       </div>
 
       {saved && <CAlert color="success" className="mb-3">✅ Settings saved.</CAlert>}
@@ -64,7 +49,7 @@ export default function Settings() {
                 <label className="form-label fw-semibold">{label}</label>
                 <CFormInput
                   type={type}
-                  value={s[key]}
+                  value={form[key] || ''}
                   onChange={(e) => upd(key, e.target.value)}
                 />
               </CCol>
@@ -73,7 +58,7 @@ export default function Settings() {
               <label className="form-label fw-semibold">Event Description</label>
               <CFormTextarea
                 rows={4}
-                value={s.description}
+                value={form.description || ''}
                 onChange={(e) => upd('description', e.target.value)}
               />
             </CCol>
