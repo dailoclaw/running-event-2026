@@ -261,8 +261,10 @@ export default function Letterbox() {
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Total Properties</div>
               <div className="fs-3 fw-bold text-primary">{totalProps.toLocaleString()}</div>
-              <ProgressBar value={100} color="#e9ecef" />
-              <div className="small text-muted mt-1">{safeSegments.length} street segments</div>
+              <ProgressBar value={completedPct} color="#198754" />
+              <div className="small text-muted mt-1">
+                {safeSegments.filter(s => s.status === 'complete').length} / {safeSegments.length} street segments
+              </div>
             </CCardBody>
           </CCard>
         </CCol>
