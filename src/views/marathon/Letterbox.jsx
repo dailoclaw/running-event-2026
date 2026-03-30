@@ -116,7 +116,9 @@ export default function Letterbox() {
 
   const totalProps = safeSegments.reduce((a, s) => a + s.total, 0)
   const completedProps = safeSegments.filter((s) => s.status === 'complete').reduce((a, s) => a + s.total, 0)
+  const inProgressProps = safeSegments.filter((s) => s.status === 'in-progress').reduce((a, s) => a + s.total, 0)
   const completedPct = totalProps ? Math.round((completedProps / totalProps) * 100) : 0
+  const inProgressPct = totalProps ? Math.round((inProgressProps / totalProps) * 100) : 0
 
   const filteredSegs = segFilter ? safeSegments.filter((s) => s.status === segFilter) : safeSegments
 
@@ -254,7 +256,7 @@ export default function Letterbox() {
 
       {/* Summary */}
       <CRow className="g-3 mb-4">
-        <CCol sm={4}>
+        <CCol sm={3}>
           <CCard className="stat-card">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Total Properties</div>
@@ -263,20 +265,31 @@ export default function Letterbox() {
             </CCardBody>
           </CCard>
         </CCol>
-        <CCol sm={4}>
+        <CCol sm={3}>
           <CCard className="stat-card">
             <CCardBody>
-              <div className="small text-muted text-uppercase fw-semibold">Overall Progress</div>
+              <div className="small text-muted text-uppercase fw-semibold">Completed</div>
               <div className="fs-3 fw-bold text-success">{completedPct}%</div>
               <ProgressBar value={completedPct} color="#198754" />
+              <div className="small text-muted mt-1">{completedProps.toLocaleString()} properties</div>
             </CCardBody>
           </CCard>
         </CCol>
-        <CCol sm={4}>
+        <CCol sm={3}>
+          <CCard className="stat-card">
+            <CCardBody>
+              <div className="small text-muted text-uppercase fw-semibold">In Progress</div>
+              <div className="fs-3 fw-bold text-info">{inProgressPct}%</div>
+              <ProgressBar value={inProgressPct} color="#0dcaf0" />
+              <div className="small text-muted mt-1">{inProgressProps.toLocaleString()} properties</div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+        <CCol sm={3}>
           <CCard className="stat-card">
             <CCardBody>
               <div className="small text-muted text-uppercase fw-semibold">Drop Runs</div>
-              <div className="fs-3 fw-bold text-info">
+              <div className="fs-3 fw-bold text-warning">
                 {safeDropRuns.filter(r => r.status === 'complete').length} / {safeDropRuns.length}
               </div>
               <div className="small text-muted">complete</div>
