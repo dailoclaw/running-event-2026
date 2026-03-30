@@ -16,12 +16,20 @@ const hashParams = new URLSearchParams(hash.replace('#', ''))
 const IS_PASSWORD_FLOW = ['invite', 'recovery'].includes(hashParams.get('type'))
 
 function Root() {
-  const [splashDone, setSplashDone] = useState(false)
+  // Persist across navigation — only show splash once per browser session
+  const [splashDone, setSplashDone] = useState(
+    () => sessionStorage.getItem('splashDone') === 'true'
+  )
   const { user, loading } = useAuth()
 
-  // 1. Always show splash first (it calls onDone after its timer)
+  const handleSplashDone = () => {
+    sessionStorage.setItem('splashDone', 'true')
+    setSplashDone(true)
+  }
+
+  // 1. Show splash only on first visit this session
   if (!splashDone) {
-    return <SplashScreen onDone={() => setSplashDone(true)} />
+    return <SplashScreen onDone={handleSplashDone} />
   }
 
   // 2. Splash done — now wait for auth check (show nothing, splash already gone)
