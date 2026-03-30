@@ -1,27 +1,23 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { CCard, CCardBody, CButton, CFormInput, CAlert, CSpinner } from '@coreui/react'
 
 export default function SetPassword() {
+  const { updatePassword, signOut } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
-  // Supabase puts the token in the URL hash on invite/reset links
-  useEffect(() => {
-    supabase.auth.getSession()
-  }, [])
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
     setLoading(true); setError('')
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) setError(error.message)
-    else setDone(true)
+    const { error } = await updatePassword(password)
+    if (error) { setError(error.message); setLoading(false); return }
+    setDone(true)
     setLoading(false)
   }
 
@@ -58,15 +54,17 @@ export default function SetPassword() {
               <div className="text-center">
                 <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
                 <h5 className="fw-bold mb-2">Password set!</h5>
-                <p className="text-muted mb-4">You can now sign in with your new password.</p>
+                <p className="text-muted mb-4">Your account is ready. Click below to go to the app.</p>
                 <CButton color="primary" className="w-100" onClick={() => window.location.href = '/'}>
-                  Go to Sign In
+                  Go to Dashboard
                 </CButton>
               </div>
             ) : (
               <>
                 <h5 className="fw-bold mb-1">Set Your Password</h5>
-                <p className="text-muted small mb-4">Choose a password to activate your account</p>
+                <p className="text-muted small mb-4">
+                  Choose a password to secure your account. You'll use this to sign in from now on.
+                </p>
 
                 {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
@@ -92,11 +90,18 @@ export default function SetPassword() {
                       required
                     />
                   </div>
-                  <CButton type="submit" color="primary" className="w-100" disabled={loading}>
+                  <CButton type="submit" color="primary" className="w-100" disabled={loading} style={{ padding: 10, fontWeight: 600 }}>
                     {loading ? <CSpinner size="sm" className="me-2" /> : null}
-                    {loading ? 'Saving...' : 'Set Password'}
+                    {loading ? 'Saving...' : 'Set Password & Continue'}
                   </CButton>
                 </form>
+
+                <div className="text-center mt-3">
+                  <button type="button" className="btn btn-link btn-sm text-muted"
+                    onClick={() => signOut()}>
+                    Cancel — Sign out
+                  </button>
+                </div>
               </>
             )}
           </CCardBody>

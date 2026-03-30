@@ -10,33 +10,27 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './views/auth/Login'
 import SetPassword from './views/auth/SetPassword'
 
-// Detect if this is an invite/password-reset link (Supabase puts type in URL hash)
-function isPasswordSetFlow() {
-  const hash = window.location.hash
-  return hash.includes('type=invite') || hash.includes('type=recovery')
-}
-
 function Root() {
   const [splashDone, setSplashDone] = useState(false)
-  const { user, loading } = useAuth()
+  const { user, loading, needsPassword } = useAuth()
 
   // Always show splash first
   if (!splashDone) {
     return <SplashScreen onDone={() => setSplashDone(true)} />
   }
 
-  // Invite / password reset flow — show set-password page
-  if (isPasswordSetFlow()) {
+  // Still resolving session
+  if (loading) return null
+
+  // User is logged in via invite/reset link — must set password before continuing
+  if (user && needsPassword) {
     return <SetPassword />
   }
 
-  // Still checking session
-  if (loading) return null
-
-  // Not logged in → login page
+  // Not logged in → login
   if (!user) return <Login />
 
-  // Logged in → app
+  // Logged in with password already set → app
   return <App />
 }
 
