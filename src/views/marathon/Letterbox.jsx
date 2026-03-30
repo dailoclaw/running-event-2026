@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as XLSX from 'xlsx'
 import {
   CCard, CCardBody, CCardHeader, CButton, CFormInput, CFormSelect, CBadge,
   CRow, CCol, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
@@ -44,6 +45,72 @@ export default function Letterbox() {
   const [segFilter, setSegFilter] = useState('')
   const [validationMsg, setValidationMsg] = useState('')
   const [saved, setSaved] = useState(false)
+
+  const exportToExcel = () => {
+    const wb = XLSX.utils.book_new()
+    const now = new Date().toLocaleString('en-AU')
+
+    // Sheet 1: Summary
+    const completedProps = safeSegments.filter(s => s.status === 'complete').reduce((a, s) => a + s.total, 0)
+    const totalPropsCount = safeSegments.reduce((a, s) => a + s.total, 0)
+    const ws1 = XLSX.utils.aoa_to_sheet([
+      ['2026 Adelaide Marathon — Letterbox Drop Status Summary'],
+      [`Generated: ${now}`],
+      [],
+      ['Metric', 'Value'],
+      ['Total Street Segments', safeSegments.length],
+      ['Segments Complete', safeSegments.filter(s => s.status === 'complete').length],
+      ['Segments In Progress', safeSegments.filter(s => s.status === 'in-progress').length],
+      ['Segments Pending', safeSegments.filter(s => s.status === 'pending').length],
+      [],
+      ['Total Properties', totalPropsCount],
+      ['Properties Covered', completedProps],
+      ['Properties Remaining', totalPropsCount - completedProps],
+      ['Coverage %', totalPropsCount ? `${Math.round((completedProps / totalPropsCount) * 100)}%` : '0%'],
+      [],
+      ['Total Drop Runs', safeDropRuns.length],
+      ['Runs Complete', safeDropRuns.filter(r => r.status === 'complete').length],
+      ['Runs In Progress', safeDropRuns.filter(r => r.status === 'in-progress').length],
+      ['Runs Pending', safeDropRuns.filter(r => r.status === 'pending').length],
+    ])
+    ws1['!cols'] = [{ wch: 30 }, { wch: 20 }]
+    XLSX.utils.book_append_sheet(wb, ws1, 'Summary')
+
+    // Sheet 2: Street Segments
+    const ws2 = XLSX.utils.aoa_to_sheet([
+      ['Segment', 'Houses', 'Apts', 'Business', 'Total Properties', 'Assigned To', 'Status'],
+      ...safeSegments.map(s => [
+        s.name,
+        s.mainHouses + s.sideHouses,
+        s.mainApts + s.sideApts,
+        s.mainBusiness + s.sideBusiness,
+        s.total,
+        s.assignedTo || '',
+        s.status,
+      ]),
+      [],
+      ['TOTALS', '', '', '',
+        safeSegments.reduce((a, s) => a + s.total, 0), '',
+        `${safeSegments.filter(s => s.status === 'complete').length} of ${safeSegments.length} complete`
+      ],
+    ])
+    ws2['!cols'] = [{ wch: 45 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 20 }, { wch: 14 }]
+    XLSX.utils.book_append_sheet(wb, ws2, 'Street Segments')
+
+    // Sheet 3: Drop Runs
+    const ws3 = XLSX.utils.aoa_to_sheet([
+      ['Run Name', 'Volunteer', 'Date', 'Segments', 'Total Properties', 'Status'],
+      ...safeDropRuns.map(run => {
+        const runSegs = safeSegments.filter(s => run.segments.includes(s.id))
+        return [run.name, run.volunteer || '', run.date || '',
+          runSegs.length, runSegs.reduce((a, s) => a + s.total, 0), run.status]
+      }),
+    ])
+    ws3['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 14 }]
+    XLSX.utils.book_append_sheet(wb, ws3, 'Drop Runs')
+
+    XLSX.writeFile(wb, `Letterbox_Drop_Status_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
 
   const totalProps = safeSegments.reduce((a, s) => a + s.total, 0)
   const completedProps = safeSegments.filter((s) => s.status === 'complete').reduce((a, s) => a + s.total, 0)
@@ -146,7 +213,12 @@ export default function Letterbox() {
           <h4 className="fw-bold mb-1">Letterbox Drop Planner</h4>
           <span className="text-muted small">Organise and track community letterbox drops along the marathon route</span>
         </div>
-        <CButton color="primary" onClick={() => { resetForm(); setShowNew(true) }}>+ New Drop Run</CButton>
+        <div className="d-flex gap-2">
+          <CButton color="success" variant="outline" size="sm" onClick={exportToExcel}>
+            Export Excel
+          </CButton>
+          <CButton color="primary" onClick={() => { resetForm(); setShowNew(true) }}>+ New Drop Run</CButton>
+        </div>
       </div>
 
       {saved && <CAlert color="success" className="mb-3">Drop run created successfully!</CAlert>}
