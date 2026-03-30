@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import {
   CDropdown, CDropdownDivider, CDropdownHeader,
   CDropdownItem, CDropdownMenu, CDropdownToggle,
@@ -7,18 +6,12 @@ import { cilLockLocked, cilUser } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { useProfile } from '../../context/ProfileContext'
 
 const AppHeaderDropdown = () => {
   const { user, signOut } = useAuth()
+  const { profile } = useProfile()
   const navigate = useNavigate()
-  const [profile, setProfile] = useState(null)
-
-  useEffect(() => {
-    if (!user) return
-    supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single()
-      .then(({ data }) => { if (data) setProfile(data) })
-  }, [user])
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Account'
 

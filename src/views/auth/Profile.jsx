@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { useProfile } from '../../context/ProfileContext'
 import {
   CCard, CCardBody, CCardHeader, CButton, CFormInput,
   CAlert, CSpinner, CRow, CCol,
@@ -10,16 +11,15 @@ import { cilUser, cilCamera } from '@coreui/icons'
 
 export default function Profile() {
   const { user } = useAuth()
+  const { profile, updateProfile } = useProfile()
   const fileRef = useRef()
 
-  const [profile, setProfile] = useState({ full_name: '', avatar_url: '' })
-  const [loading, setLoading] = useState(true)
+  const [fullName, setFullName] = useState(profile.full_name || '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
 
-  // Password change
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -27,27 +27,16 @@ export default function Profile() {
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
 
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url, role')
-        .eq('id', user.id)
-        .single()
-      if (data) setProfile(data)
-      setLoading(false)
-    }
-    load()
-  }, [user.id])
+  // Keep local name in sync if context updates
+  const avatarUrl = profile.avatar_url || ''
+
+  const flash = (setFn, msg) => { setFn(msg); setTimeout(() => setFn(''), 3000) }
 
   const saveProfile = async () => {
-    setSaving(true); setError(''); setSuccess('')
-    const { error } = await supabase
-      .from('profiles')
-      .update({ full_name: profile.full_name })
-      .eq('id', user.id)
+    setSaving(true); setError('')
+    const { error } = await updateProfile({ full_name: fullName })
     if (error) setError(error.message)
-    else { setSuccess('Profile saved.'); setTimeout(() => setSuccess(''), 3000) }
+    else flash(setSuccess, 'Profile saved.')
     setSaving(false)
   }
 
@@ -55,31 +44,21 @@ export default function Profile() {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) { setError('Image must be under 2MB'); return }
-
     setUploading(true); setError('')
+
     const ext = file.name.split('.').pop()
     const path = `${user.id}/avatar.${ext}`
 
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, { upsert: true })
-
+      .from('avatars').upload(path, file, { upsert: true })
     if (uploadError) { setError(uploadError.message); setUploading(false); return }
 
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    const avatarUrl = `${publicUrl}?t=${Date.now()}` // cache bust
+    const url = `${publicUrl}?t=${Date.now()}`
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: avatarUrl })
-      .eq('id', user.id)
-
+    const { error: updateError } = await updateProfile({ avatar_url: url })
     if (updateError) setError(updateError.message)
-    else {
-      setProfile((p) => ({ ...p, avatar_url: avatarUrl }))
-      setSuccess('Photo updated.')
-      setTimeout(() => setSuccess(''), 3000)
-    }
+    else flash(setSuccess, 'Photo updated.')
     setUploading(false)
   }
 
@@ -87,7 +66,7 @@ export default function Profile() {
     e.preventDefault()
     if (newPw.length < 8) { setPwError('Min. 8 characters.'); return }
     if (newPw !== confirmPw) { setPwError('Passwords do not match.'); return }
-    setPwLoading(true); setPwError(''); setPwSuccess('')
+    setPwLoading(true); setPwError('')
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user.email, password: currentPw,
@@ -97,14 +76,11 @@ export default function Profile() {
     const { error } = await supabase.auth.updateUser({ password: newPw })
     if (error) setPwError(error.message)
     else {
-      setPwSuccess('Password changed.')
+      flash(setPwSuccess, 'Password changed.')
       setCurrentPw(''); setNewPw(''); setConfirmPw('')
-      setTimeout(() => setPwSuccess(''), 3000)
     }
     setPwLoading(false)
   }
-
-  if (loading) return <div className="text-center py-5"><CSpinner color="primary" /></div>
 
   return (
     <>
@@ -117,7 +93,6 @@ export default function Profile() {
       {error && <CAlert color="danger" className="mb-3">{error}</CAlert>}
 
       <CRow className="g-3">
-        {/* Left — avatar + name */}
         <CCol md={5}>
           <CCard className="stat-card">
             <CCardHeader className="fw-semibold">Your Profile</CCardHeader>
@@ -125,26 +100,20 @@ export default function Profile() {
               {/* Avatar */}
               <div className="d-flex flex-column align-items-center mb-4">
                 <div style={{ position: 'relative', width: 96, height: 96 }}>
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt="Avatar"
-                      style={{
-                        width: 96, height: 96, borderRadius: '50%',
-                        objectFit: 'cover', border: '3px solid #FF4D4D',
-                      }}
-                    />
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" style={{
+                      width: 96, height: 96, borderRadius: '50%',
+                      objectFit: 'cover', border: '3px solid #FF4D4D',
+                    }} />
                   ) : (
                     <div style={{
                       width: 96, height: 96, borderRadius: '50%',
                       background: '#FF4D4D', display: 'flex',
                       alignItems: 'center', justifyContent: 'center',
-                      border: '3px solid #FF4D4D',
                     }}>
                       <CIcon icon={cilUser} style={{ width: 40, height: 40, color: '#fff' }} />
                     </div>
                   )}
-                  {/* Camera button */}
                   <button
                     onClick={() => fileRef.current?.click()}
                     disabled={uploading}
@@ -155,7 +124,6 @@ export default function Profile() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', color: '#fff',
                     }}
-                    title="Change photo"
                   >
                     {uploading
                       ? <CSpinner size="sm" style={{ width: 12, height: 12 }} />
@@ -163,34 +131,26 @@ export default function Profile() {
                     }
                   </button>
                 </div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handleAvatarUpload}
-                />
+                <input ref={fileRef} type="file" accept="image/*"
+                  style={{ display: 'none' }} onChange={handleAvatarUpload} />
                 <div className="text-muted small mt-2">Click camera to change photo</div>
                 <div className="text-muted" style={{ fontSize: 11 }}>Max 2MB · JPG or PNG</div>
               </div>
 
-              {/* Name */}
               <div className="mb-3">
                 <label className="form-label fw-semibold">Full Name</label>
                 <CFormInput
                   placeholder="Your name"
-                  value={profile.full_name || ''}
-                  onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                 />
               </div>
 
-              {/* Email (read-only) */}
               <div className="mb-3">
                 <label className="form-label fw-semibold">Email</label>
                 <CFormInput value={user?.email || ''} disabled />
               </div>
 
-              {/* Role */}
               <div className="mb-4">
                 <label className="form-label fw-semibold">Role</label>
                 <div className="mt-1">
@@ -208,7 +168,6 @@ export default function Profile() {
           </CCard>
         </CCol>
 
-        {/* Right — change password */}
         <CCol md={7}>
           <CCard className="stat-card">
             <CCardHeader className="fw-semibold">Change Password</CCardHeader>
