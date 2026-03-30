@@ -14,23 +14,10 @@ function Root() {
   const [splashDone, setSplashDone] = useState(false)
   const { user, loading, needsPassword } = useAuth()
 
-  // Always show splash first
-  if (!splashDone) {
-    return <SplashScreen onDone={() => setSplashDone(true)} />
-  }
-
-  // Still resolving session
+  if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />
   if (loading) return null
-
-  // User is logged in via invite/reset link — must set password before continuing
-  if (user && needsPassword) {
-    return <SetPassword />
-  }
-
-  // Not logged in → login
+  if (user && needsPassword) return <SetPassword />
   if (!user) return <Login />
-
-  // Logged in with password already set → app
   return <App />
 }
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { CFooter } from '@coreui/react'
 
-const VERSION = '1.4.2'
+const VERSION = '1.4.3'
 
 const AppFooter = () => {
   return (
