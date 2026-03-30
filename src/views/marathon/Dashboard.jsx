@@ -47,12 +47,23 @@ export default function Dashboard() {
   const { contacts, segments, dropRuns, getStats } = useMarathonStore()
   const stats = getStats()
 
-  const totalProps = segments.reduce((a, s) => a + s.total, 0)
-  const completedRuns = dropRuns.filter((r) => r.status === 'complete').length
+  const safeSegments = Array.isArray(segments) ? segments : []
+  const safeDropRuns = Array.isArray(dropRuns) ? dropRuns : []
+
+  const totalProps = safeSegments.reduce((a, s) => a + s.total, 0)
+  const completedProps = safeSegments.filter((s) => s.status === 'complete').reduce((a, s) => a + s.total, 0)
+  const completedSegments = safeSegments.filter((s) => s.status === 'complete').length
+  const completedRuns = safeDropRuns.filter((r) => r.status === 'complete').length
+
+  // Email stats
   const emailedPct = stats.total ? Math.round((stats.emailed / stats.total) * 100) : 0
   const respondedPct = stats.emailed ? Math.round((stats.responded / stats.emailed) * 100) : 0
   const failedPct = stats.total ? Math.round((stats.failed / stats.total) * 100) : 0
-  const droppedPct = stats.total ? Math.round((stats.dropped / stats.total) * 100) : 0
+
+  // Letterbox — match Letterbox page exactly (segment-based)
+  const propsPct = totalProps ? Math.round((completedProps / totalProps) * 100) : 0
+  const segPct = safeSegments.length ? Math.round((completedSegments / safeSegments.length) * 100) : 0
+  const runsPct = safeDropRuns.length ? Math.round((completedRuns / safeDropRuns.length) * 100) : 0
 
   if (contacts.length === 0) {
     return (
@@ -141,24 +152,24 @@ export default function Dashboard() {
             <CCardBody>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Contacts Dropped</span>
-                  <strong className="text-success">{stats.dropped} / {stats.total} ({droppedPct}%)</strong>
+                  <span>Properties Covered</span>
+                  <strong className="text-success">{completedProps.toLocaleString()} / {totalProps.toLocaleString()} ({propsPct}%)</strong>
                 </div>
-                <ProgressBar value={droppedPct} color="#198754" />
+                <ProgressBar value={propsPct} color="#198754" />
               </div>
               <div className="mb-3">
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Drop Runs Complete</span>
-                  <strong>{completedRuns} / {dropRuns.length}</strong>
+                  <span>Segments Complete</span>
+                  <strong>{completedSegments} / {safeSegments.length} ({segPct}%)</strong>
                 </div>
-                <ProgressBar value={dropRuns.length ? Math.round((completedRuns / dropRuns.length) * 100) : 0} color="#0dcaf0" />
+                <ProgressBar value={segPct} color="#FF4D4D" />
               </div>
               <div>
                 <div className="d-flex justify-content-between small mb-1">
-                  <span>Segments Complete</span>
-                  <strong>{segments.filter(s => s.status === 'complete').length} / {segments.length}</strong>
+                  <span>Drop Runs Complete</span>
+                  <strong>{completedRuns} / {safeDropRuns.length} ({runsPct}%)</strong>
                 </div>
-                <ProgressBar value={segments.length ? Math.round((segments.filter(s => s.status === 'complete').length / segments.length) * 100) : 0} color="#FF4D4D" />
+                <ProgressBar value={runsPct} color="#0dcaf0" />
               </div>
             </CCardBody>
           </CCard>
