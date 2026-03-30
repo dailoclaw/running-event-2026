@@ -19,12 +19,12 @@ function Root() {
   const [splashDone, setSplashDone] = useState(false)
   const { user, loading } = useAuth()
 
-  if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />
+  // Keep splash visible until both splash timer AND auth check are done
+  if (!splashDone || loading) return <SplashScreen onDone={() => setSplashDone(true)} />
 
   // Invite or password reset link — go straight to set-password
   if (IS_PASSWORD_FLOW) return <SetPassword />
 
-  if (loading) return null
   if (!user) return <Login />
   return <App />
 }
