@@ -17,8 +17,13 @@ export default function Login() {
     e.preventDefault()
     setLoading(true); setError('')
     const { error } = await signIn(email, password)
-    if (error) setError(error.message)
-    setLoading(false)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    } else {
+      // Hard redirect — most reliable way to ensure app loads after auth
+      window.location.href = '/'
+    }
   }
 
   const handleReset = async (e) => {
